@@ -34,7 +34,7 @@ int DiskManager::AllocatePage() {
     
     db_io_.seekp(new_page_id * PAGE_SIZE, std::ios::beg);
     db_io_.write(blank_data, PAGE_SIZE);
-    db_io_.flush(); 
+    //db_io_.flush(); 
     
     num_pages_++;
     return new_page_id;
@@ -59,7 +59,7 @@ void DiskManager::WritePage(int page_id, const char* page_data) {
     int offset = page_id * PAGE_SIZE;
     db_io_.seekp(offset, std::ios::beg);
     db_io_.write(page_data, PAGE_SIZE);
-    db_io_.flush();
+    //db_io_.flush();
 }
 
 int DiskManager::GetNumPages() const {
