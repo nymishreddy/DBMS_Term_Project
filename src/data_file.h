@@ -2,16 +2,16 @@
 #define DATA_FILE_H
 
 #include "disk_manager.h"
+#include "buffer_pool_manager.h"
 #include <vector>
 
 class DataFile {
 private:
-    DiskManager* disk_manager_;
+    DiskManager*       disk_manager_;
+    BufferPoolManager* bpm_;
     int vector_dim_;
     int record_size_;
     int records_per_page_;
-
-    // Track state in memory (mirrored from header page)
     int total_records_;
     int total_data_pages_;
 
@@ -19,7 +19,7 @@ private:
     void WriteHeader();
 
 public:
-    DataFile(DiskManager* dm, int vector_dim);
+    DataFile(DiskManager* dm, BufferPoolManager* bpm, int vector_dim);
 
     std::vector<float> ReadRecord(int record_id);
     int AppendRecord(const std::vector<float>& vec);
@@ -27,4 +27,4 @@ public:
     int GetTotalRecords() const { return total_records_; }
 };
 
-#endif  
+#endif
