@@ -48,6 +48,7 @@ void DiskManager::ReadPage(int page_id, char* page_data) {
     int offset = page_id * PAGE_SIZE;
     db_io_.seekg(offset, std::ios::beg);
     db_io_.read(page_data, PAGE_SIZE);
+    read_count_++;
 }
 
 void DiskManager::WritePage(int page_id, const char* page_data) {

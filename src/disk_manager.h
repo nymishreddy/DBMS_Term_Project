@@ -9,7 +9,8 @@ class DiskManager {
 private:
     std::fstream db_io_;      
     std::string file_name_;   
-    int num_pages_;           
+    int num_pages_;  
+    int read_count_ = 0;         
 
 public:
     DiskManager(const std::string& file_name);
@@ -18,6 +19,8 @@ public:
     int AllocatePage();
     void ReadPage(int page_id, char* page_data);
     void WritePage(int page_id, const char* page_data);
+    int GetReadCount() const { return read_count_; }
+    void ResetReadCount() { read_count_ = 0; }
     
     int GetNumPages() const;
 };
