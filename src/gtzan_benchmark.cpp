@@ -114,7 +114,7 @@ void RunBenchmark(const std::string& emb_path, int dim,
     std::remove(tree_db.c_str());
 
     DiskManager        dm_data(data_db), dm_tree(tree_db);
-    BufferPoolManager  bpm_data(&dm_data, 128), bpm_tree(&dm_tree, 128);
+    BufferPoolManager  bpm_data(&dm_data, 512), bpm_tree(&dm_tree, 512);
     DataFile           df(&dm_data, &bpm_data, dim);
     RTree              rt(&dm_tree, &bpm_tree, &df, dim);
 
@@ -182,9 +182,11 @@ void RunBenchmark(const std::string& emb_path, int dim,
 
 int main() {
     auto labels = LoadLabels("labels.bin");
-
+    RunBenchmark("gtzan_pca_2.bin", 2, labels, "2D");
+    RunBenchmark("gtzan_pca_3.bin", 3, labels, "3D");
     RunBenchmark("gtzan_pca_6.bin",  6,  labels, "6D");
     RunBenchmark("gtzan_pca_10.bin", 10, labels, "10D");
+    
     // main() now calls:
 RunBenchmark("gtzan_pca_15.bin", 15, labels, "15D");
 RunBenchmark("gtzan_pca_20.bin", 20, labels, "20D");
