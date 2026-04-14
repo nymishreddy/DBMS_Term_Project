@@ -1,0 +1,83 @@
+This concept is straightforward to detail in text. Below is a structured plan for the initial testing and image PCA benchmarking phase, designed to be understood and executed based on the provided C++ files.
+
+### R-Tree Implementation & Performance Testing Plan
+
+---
+
+#### **Overview**
+
+This plan outlines the steps to verify the correctness and benchmark the performance of the provided C++ disk-based R-Tree implementation. The process involves an initial sanity check using synthetic data, followed by testing with real-world image embeddings reduced to different dimensions via Principal Component Analysis (PCA). The goal is to evaluate build time, query time, and disk I/O performance across different dimensionalities.
+
+#### **Assumptions**
+-   You have the provided C++ source files for the DiskManager, DataFile, Page structure, RTreeNode, and RTree implementation.
+-   You have access to a C++ compiler (e.g., `g++`) and an environment for running Python scripts with libraries like `scikit-learn`, `numpy`, and `struct`.
+
+---
+
+### **Phase 1: Verification & Correctness (C++ Only)**
+
+**Objective:** Ensure the R-Tree correctly builds its structure, handles page splits, and performs accurate $k$-Nearest Neighbor ($k$-NN) searches.
+
+1.  **Develop a simple `main.cpp` driver.** This should:
+    * Initialize `DiskManager` instances for data and tree files.
+    * Create `DataFile` and `RTree` objects with a low dimensionality (e.g., 10D).
+    * Perform a limited number of insertions to confirm basic functionality without triggering page splits.
+    * Execute a small $k$-NN query (e.g., 1-NN) and print the results to verify they are plausible.
+
+2.  **Develop a robust stress test in `main.cpp`.** This test is crucial for verifying page split logic and kNN search accuracy:
+    * Define a dimensionality (e.g., 10D) and a significant number of points (e.g., 500) to ensure multiple page splits.
+    * Use a random number generator with a fixed seed for reproducibility.
+    * Generate `num_points` random vectors and insert them into the R-Tree.
+    * Verify and print the tree height to ensure it has increased from the initial height of 1.
+    * Generate a separate random query vector.
+    * **R-Tree Search:** Perform a $k$-NN search (e.g., 5-NN) on the R-Tree and store the results (Record ID and squared distance).
+    * **Linear Scan Baseline:** Implement a linear scan over the dataset in memory to calculate the true $k$-Nearest Neighbors and their squared distances for the same query.
+    * **Comparison:** Sort both sets of results by distance and compare the top $k$ neighbors. Assert that the squared distances match within a small floating-point tolerance. Matching results confirm that the R-Tree hasn't dropped any branches during its prioritized search.
+
+3.  **Perform the verification test.**
+    * Delete any pre-existing database files (`*.db`).
+    * Compile the test code.
+    * Run the compiled executable.
+    * Confirm the output matches the results from the linear scan, validating the R-Tree's correctness.
+
+---
+
+### **Phase 2: Image PCA & Data Preparation (Python Only)**
+
+**Objective:** Process image data to generate different dimensionalities of embeddings via PCA, exporting the results into a binary format suitable for efficient ingestion by the C++ R-Tree.
+
+1.  **Select or Generate Image Embeddings.** Use an existing pipeline (e.g., ResNet50) to extract high-dimensional feature vectors (embeddings) from a set of images (e.g., thousands). For initial testing, embeddings can be simulated using random values.
+
+2.  **Apply PCA reduction.**
+    * Iterate through the desired target dimensionalities: 10D, 20D, 30D, and 50D.
+    * Use `sklearn.decomposition.PCA` to reduce the original embeddings to each target dimensionality.
+
+3.  **Export data to binary files.** For each target dimensionality:
+    * Define a file layout (e.g., `[num_records (int32)] [dim (int32)] [data (float32 array)]`).
+    * Open a file for binary writing.
+    * Write the header information (number of records and dimensionality).
+    * Write the reduced embeddings as a block of raw bytes.
+    * Repeat this process to create separate binary files for 10D, 20D, 30D, and 50D data.
+
+---
+
+### **Phase 3: Integration & Performance Benchmarking (C++ Only)**
+
+**Objective:** Use the prepared PCA data to benchmark the R-Tree's performance in terms of index build time, query time, and disk I/O, observing how performance scales with increasing dimensionality.
+
+1.  **Extend `main.cpp` to load binary data.** Implement a function to read the header and data from the Python-exported binary files into a vector of vectors of floats.
+
+2.  **Update `main.cpp` for performance metrics.**
+    * Iterate through each dimension (10D, 20D, 30D, 50D).
+    * Load the corresponding binary data file.
+    * **Build Time:**
+        * Initialize the `DiskManager`, `DataFile`, and `RTree`.
+        * Bulk insert all loaded vectors. Measure and record the total build time.
+    * **Disk I/O and Query Time:**
+        * Instrument the `DiskManager`'s `ReadPage` method with a counter to track page fetches.
+        * Perform a standard $k$-NN query (e.g., 10-NN) multiple times (e.g., 100 queries). Measure and record the average time per query and the average number of page reads per query.
+
+3.  **Execute the benchmark.**
+    * Run the updated C++ program.
+    * Collect and analyze the results across the different dimensionalities (10D, 20D, 30D, 50D).
+    * Observe the "Curse of Dimensionality" as query performance degrades (higher average query time and page fetches) with increasing dimensionality, comparing these metrics against the performance of a pure linear scan.
